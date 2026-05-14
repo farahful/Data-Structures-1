@@ -41,7 +41,7 @@ Node* insert(Node* n, char* word);
 
 // ------- Part 2: Dictionary Functions -------
 Node* loadFile(Node* root);
-void userInput();
+void userInput(Node* root);
 Node* inorderSuccessor(Node* root, Node* node);
 Node* inorderPredecessor(Node* root, Node* node);
 Node* search(Node *root, char word[], int *found);
@@ -55,10 +55,27 @@ int main() {
     printLine();
     printf(BLUE "Dictionary loaded successfully!" RESET);
     printLine();
-    printf(CYAN "Size: %d." RESET, size);
+    printf(CYAN "Size:"GRAY" %d." RESET, size);
     printLine();
-    printf(CYAN "Height: %d." RESET, root->height);
+    printf(CYAN "Height:"GRAY" %d." RESET, root->height);
+    printLine();
+    bool running = true;
+    while(running) {
+        userInput(root);
+        printLine(); printf("\n");
+        printf(CYAN"Would you like to enter another sentence?\n" RESET);
+        char answer[10];
+        fgets(answer, 10, stdin);
+        answer[strcspn(answer, "\n")] = '\0';
 
+        for (int i = 0; answer[i]; i++) {
+        answer[i] = tolower(answer[i]);
+        }
+        if (!strcmp(answer, "no")) {
+            running = false;
+        }
+    }
+    
     return 0;
 }
 
@@ -172,7 +189,7 @@ Node* insert (Node* n, char* word) {
         return rightRotate(n);
     }
     // right left insertion -> right rotation + left rotation
-    if(bf < -1 && strcasecmp(word, n->right->word) > 0) {
+    if(bf < -1 && strcasecmp(word, n->right->word) < 0) {
         n->right = rightRotate(n->right);
         return leftRotate(n);
     }
@@ -199,9 +216,35 @@ Node* loadFile(Node* root) {
     return root;
 }
 
-void userInput();
+void userInput(Node* root) {
+    char sentence[500];
+    printf(BLUE "\nEnter the sentence: " RESET); 
+    fgets(sentence, sizeof(sentence), stdin);
+    sentence[strcspn(sentence, "\n")] = '\0';
 
-Node* inorderSuccessor(Node* root, Node* node){
+    char* token = strtok(sentence, " ");
+    while(token) {
+        int found;
+        Node* last = search(root, token, &found);
+
+        if (found) {
+            printf(GREEN "%s is correct\n" RESET, token);
+        } else {
+            printf(RED "%s is incorrect " YELLOW "| Suggestions: ", token);
+            Node* pred = inorderPredecessor(root, last);
+            Node* succ = inorderSuccessor(root, last);
+             printf("%s", last->word);
+
+            if (pred) printf(" - %s", pred->word);
+            if (succ) printf(" - %s" RESET, succ->word);
+
+            printf("\n");
+        }
+        token = strtok(NULL, " ");
+    }
+}
+
+Node* inorderSuccessor(Node* root, Node* node) {
     Node* succ = NULL;
     Node* temp = root;
     if(node->right != NULL)
